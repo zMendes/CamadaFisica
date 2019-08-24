@@ -70,8 +70,8 @@ def main():
 
     # Faz a recepção dos dados
     print ("Recebendo dados .... ")
-
-    lista_buffer =bytearray()
+    
+    
     rxBuffer, nRx = com.getData(6)
     #print(rxBuffer)
     #print(rxBuffer[-2:])
@@ -79,55 +79,71 @@ def main():
     tamanho = int.from_bytes(rxBuffer[4:], byteorder='little')
     index = int.from_bytes(rxBuffer[2:4 ], byteorder='little')
     total = int.from_bytes(rxBuffer[:2], byteorder='little')
-    print(index, "indexxxxxxxx")
-    print("Totalllllllllllllllllll", total)
-    print(rxBuffer[-3:-5])
-    print("Primeiro tamanho", tamanho)
-    print(total)
-    while index <=total:
+    print("Index inicial:", index)
+    print("Número total de pacotes", total)
+    print("Tamanho inicial", tamanho)
+    lista = list()
+    while index <total:
         if index ==1:
             rxBuffer2, nRx = com.getData(tamanho)
-            print(rxBuffer2)
-            print("PRIMEIROOOOOOOO")
-            print(tamanho, "aaaaaaaaaaaaa")
+         
+
             index +=1
+                
 
         else:
             rxBuffer2, nRx = com.getData(6)
-            print(index, "indexxxxxxxxxxxxx")
-            print(tamanho, "aaaaaaaaaaaaa")
             tamanho = int.from_bytes(rxBuffer2[4:], byteorder='little')
             index = int.from_bytes(rxBuffer2[2:4], byteorder='little')
+            print("Index atual: ", index)
+            print("Tamanho do próximo pacote: ", tamanho)
             rxBuffer2, nRx = com.getData(tamanho)
-            print(rxBuffer2)
+            auxiliar = rxBuffer2
 
         rxBuffer2 = bytearray(rxBuffer2)
+
+
+        for i in range (len(rxBuffer2)):
+            
+            if i >3:
+                
+                if (rxBuffer2[i] == 122 and rxBuffer2[i-1] == 122 and rxBuffer2[i-2]==122  and rxBuffer2[i-3] == 122):
+                     del rxBuffer2[i]
+                     del rxBuffer2[i-1]
+                     del rxBuffer2[i-2]
+                     del rxBuffer2[i-3]
+        
         z = 0
         for i in range(len(rxBuffer2)):
             if i >4:
                 if (rxBuffer2[i] == 122 and rxBuffer2[i-1] == 122 and rxBuffer2[i-2]==0  and rxBuffer2[i-3] == 122 and rxBuffer2[i-4] == 122):
                     z+=1
-
+                    
         for i in range (len(rxBuffer2)-z):
             if i >4:
                 if (rxBuffer2[i] == 122 and rxBuffer2[i-1] == 122 and rxBuffer2[i-2]==0  and rxBuffer2[i-3] == 122 and rxBuffer2[i-4] == 122):
                      del rxBuffer2[i-2]
-        lista_buffer.append(rxBuffer2)                 
+        
+        for x in rxBuffer2:
+            lista.append(x)
+        rxBuffer2 = bytes(lista)
+        print("Adicionado na lista")
+    
+                    
 
-    #print(rxBuffer)
+    #print("Finalllllllllllllll", rxBuffer2)
 
     #print(nRx)
     
     #print("Len da imagem recebida",tamanho ) 
-    
-    #com.fisica.flush()
+ #com.fsica.flush()
     #com.sendData(rxBuffer)
     #txSize = com.tx.getStatus()
     #print("Transmitido:", txSize)
   
     
-    
 
+    
 
 
     
@@ -136,7 +152,9 @@ def main():
     print ("Lido              {} bytes ".format(nRx))
 
     
-    open("logo.png", "wb").write(lista_buffer)
+    f=open("logo.png", "wb")
+    f.write(rxBuffer2)
+    f.close()
     print("Imagem salva")
     #print(rxBuffer2[:EOPstart-2].decode("utf-8"))
     print("------------------------------------------")
