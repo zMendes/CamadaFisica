@@ -18,7 +18,7 @@ import time
 #   para saber a sua porta, execute no terminal :
 #   python3 -m serial.tools.list_ports
 
-serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
+serialName = "/dev/ttyACM1"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
 #serialName = "/dev/cu.usbmodem142101"
 #serialName = "COM4"                  # Windows(variacao de)
@@ -83,6 +83,8 @@ def main():
     print("Número total de pacotes", total)
     print("Tamanho inicial", tamanho)
     lista = list()
+          
+    
     while index <total:
         if index ==1:
             rxBuffer2, nRx = com.getData(tamanho)
@@ -92,26 +94,34 @@ def main():
                 
 
         else:
-            rxBuffer2, nRx = com.getData(6)
-            tamanho = int.from_bytes(rxBuffer2[4:], byteorder='little')
-            index = int.from_bytes(rxBuffer2[2:4], byteorder='little')
+            rxBuffer, nRx = com.getData(6)
+            tamanho = int.from_bytes(rxBuffer[4:], byteorder='little')
+            index = int.from_bytes(rxBuffer[2:4], byteorder='little')
             print("Index atual: ", index)
             print("Tamanho do próximo pacote: ", tamanho)
             rxBuffer2, nRx = com.getData(tamanho)
-            auxiliar = rxBuffer2
+            
+     
 
         rxBuffer2 = bytearray(rxBuffer2)
 
 
         for i in range (len(rxBuffer2)):
             
-            if i >3:
+            if i >3 :
                 
                 if (rxBuffer2[i] == 122 and rxBuffer2[i-1] == 122 and rxBuffer2[i-2]==122  and rxBuffer2[i-3] == 122):
-                     del rxBuffer2[i]
-                     del rxBuffer2[i-1]
-                     del rxBuffer2[i-2]
-                     del rxBuffer2[i-3]
+                    if rxBuffer2[i-3] !=rxBuffer2[-4]:
+                        print(rxBuffer2[i-3])
+                        print(rxBuffer2[-4])
+                        print("EOP está num lugar inesperado.")
+                        break
+                    else:
+                        print("EOP foi encontrado no lugar correto",i-3)
+                    del rxBuffer2[i]
+                    del rxBuffer2[i-1]
+                    del rxBuffer2[i-2]
+                    del rxBuffer2[i-3]
         
         z = 0
         for i in range(len(rxBuffer2)):
@@ -127,23 +137,10 @@ def main():
         for x in rxBuffer2:
             lista.append(x)
         rxBuffer2 = bytes(lista)
-        print("Adicionado na lista")
-    
-                    
-
-    #print("Finalllllllllllllll", rxBuffer2)
-
-    #print(nRx)
-    
-    #print("Len da imagem recebida",tamanho ) 
- #com.fsica.flush()
-    #com.sendData(rxBuffer)
-    #txSize = com.tx.getStatus()
-    #print("Transmitido:", txSize)
+        
   
-    
 
-    
+
 
 
     
@@ -152,9 +149,8 @@ def main():
     print ("Lido              {} bytes ".format(nRx))
 
     
-    f=open("logo.png", "wb")
-    f.write(rxBuffer2)
-    f.close()
+    open("logo.png", "wb").write(rxBuffer2)
+    
     print("Imagem salva")
     #print(rxBuffer2[:EOPstart-2].decode("utf-8"))
     print("------------------------------------------")
