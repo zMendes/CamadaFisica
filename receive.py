@@ -14,6 +14,32 @@ print("comecou")
 from enlace import *
 import time
 
+
+t1 =1
+TIPO2 = t1.to_bytes(1, 'little')
+
+t2 =2
+TIPO2 = t2.to_bytes(1, 'little')
+
+t3 =3
+TIPO3 = t3.to_bytes(1, 'little')
+
+t4 =4
+TIPO4 = t4.to_bytes(1, 'little')
+
+t5 =5
+TIPO5 = t5.to_bytes(1, 'little')
+
+t6 =6
+TIPO6 = t6.to_bytes(1, 'little')
+
+PC_ID = 2
+
+
+
+
+
+
 def removeEOP(rxBuffer2):
     print(rxBuffer2)
     for i in range (len(rxBuffer2)):
@@ -79,46 +105,72 @@ def main():
     print("  porta : {}".format(com.fisica.name))
     print("-------------------------")
 
-    ocioso = True;  
-    rxBuffer, nRx = com.getData(6)
+    ocioso = True  
+    
+    while ocioso:
+        rxBuffer, nRx = com.getData(5)
+        tipo = int.from_bytes(rxBuffer[0], byteorder='little')
+        id = int.from_bytes(rxBuffer[1], byteorder='little')
+        tamanho = int.from_bytes(rxBuffer[2], byteorder='little')
+        if tipo ==t1:
+            if id == PC_ID:
+                time.sleep(1)
+                rxBuffer, nRx = com.getData(tamanho)
+                total = int.from_bytes(rxBuffer, byteorder='little')
+                com.sendData(TIPO2)
+                ocioso = False
+                
+        else: time.sleep(1)
+            
     
 
-
+    index = 1
     
-    
-
-    tamanho = int.from_bytes(rxBuffer[4:], byteorder='little')
-    index = int.from_bytes(rxBuffer[2:4 ], byteorder='little')
-    total = int.from_bytes(rxBuffer[:2], byteorder='little')
+    #tamanho = int.from_bytes(rxBuffer[4:], byteorder='little')
+    #index = int.from_bytes(rxBuffer[2:4 ], byteorder='little')
+    #total = int.from_bytes(rxBuffer[:2], byteorder='little')
     lista = list()
           
     
-    while index <total:
-        if index ==1:
-            rxBuffer2, nRx = com.getData(tamanho)
-         
+    while index <=total:
+        timer = time.time()
 
-            index +=1
-                
-
-        else:
-            rxBuffer, nRx = com.getData(6)
-            tamanho = int.from_bytes(rxBuffer[4:], byteorder='little')
-            index = int.from_bytes(rxBuffer[2:4], byteorder='little')
-            print("Index atual: ", index)
-            print("Tamanho do próximo pacote: ", tamanho)
-            rxBuffer2, nRx = com.getData(tamanho)
-            
-
-        #Converte o rxBuffer para bytearray para podermos alterá-lo
-        rxBuffer_bytearray = bytearray(rxBuffer2)
-        #Remove o End Of Package
-        rxBuffer_eop = removeEOP(rxBuffer_bytearray)
-        #Remove Stuffing
-        rxBuffer_stuff = removeStuffing(rxBuffer_eop)
-        #Converte de bytearray para uma lista em byte (Para poder salvar a imagem)
-        rxBuffer = toByte(rxBuffer_stuff, lista)
         
+        rxBuffer, nRx = com.getData(5)
+        tipo = int.from_bytes(rxBuffer[0], byteorder='little')
+        if tipo == t3:
+            tamanho = int.from_bytes(rxBuffer[2], byteorder='little')
+            i_pacote = int.from_bytes(rxBuffer[3:], byteorder='little')    
+            if index == i_pacote:
+                com.sendData(TIPO4)
+                index +=1
+                rxBuffer2, nRx = com.getData(tamanho)
+                #Converte o rxBuffer para bytearray para podermos alterá-lo
+                rxBuffer_bytearray = bytearray(rxBuffer2)
+                #Remove o End Of Package
+                rxBuffer_eop = removeEOP(rxBuffer_bytearray)
+                #Remove Stuffing
+                rxBuffer_stuff = removeStuffing(rxBuffer_eop)
+                #Converte de bytearray para uma lista em byte (Para poder salvar a imagem)
+                rxBuffer = toByte(rxBuffer_stuff, lista)
+
+            else:
+                com.sendData(TIPO6)
+        else:
+            time.sleep(1)
+            timer2 = time.time() - timer
+            if timer2 >20:
+                com.sendData(TIPO5)
+                ocioso = True
+                print(":(")
+            else:
+                timer1 = time.time() - timer
+                if timer1 > 2:
+                    com.sendData(TIPO4)
+                    timer = time.time()
+                
+        
+                
   
 
 
