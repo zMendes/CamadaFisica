@@ -15,12 +15,14 @@ from enlace import *
 import time
 
 def removeEOP(rxBuffer2):
+    print(rxBuffer2)
     for i in range (len(rxBuffer2)):
+        
     
             if i >3 :
-                
+
                 if (rxBuffer2[i] == 122 and rxBuffer2[i-1] == 122 and rxBuffer2[i-2]==122  and rxBuffer2[i-3] == 122):
-                    if rxBuffer2[i-3] ==rxBuffer2[-4]:
+                    if i ==len(rxBuffer2)-1:
                         del rxBuffer2[i]
                         del rxBuffer2[i-1]
                         del rxBuffer2[i-2]
@@ -29,7 +31,8 @@ def removeEOP(rxBuffer2):
                         print(rxBuffer2[i-3])
                         print(rxBuffer2[-4])
                         print("EOP está num lugar inesperado.")
-                        break
+                        
+
     return rxBuffer2
 
 
@@ -68,7 +71,7 @@ def main():
     # Ativa comunicacao
     com.enable()
 
-   
+    
 
     # Log
     print("-------------------------")
@@ -76,25 +79,17 @@ def main():
     print("  porta : {}".format(com.fisica.name))
     print("-------------------------")
 
-    # Carrega dados
-    print ("gerando dados para transmissao :")
-  
+    ocioso = True;  
+    rxBuffer, nRx = com.getData(6)
     
 
-    # Faz a recepção dos dados
-    print ("Recebendo dados .... ")
+
     
     
-    rxBuffer, nRx = com.getData(6)
-    #print(rxBuffer)
-    #print(rxBuffer[-2:])
-    print("Primeiro RXXXXXXXX", rxBuffer)
+
     tamanho = int.from_bytes(rxBuffer[4:], byteorder='little')
     index = int.from_bytes(rxBuffer[2:4 ], byteorder='little')
     total = int.from_bytes(rxBuffer[:2], byteorder='little')
-    print("Index inicial:", index)
-    print("Número total de pacotes", total)
-    print("Tamanho inicial", tamanho)
     lista = list()
           
     
