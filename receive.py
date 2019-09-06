@@ -15,6 +15,50 @@ from enlace import *
 import time
 
 
+def TypeOneMessage():
+    
+    eop =  "zzzz"
+    eop = eop.encode()
+
+
+    len_payload = 0
+    len_payload = len_payload.to_bytes(1, "little")
+
+    type_message_1 = 2
+    type_message_1 = type_message_1.to_bytes(1, "little")
+
+    id_server = 2
+    id_server = id_server.to_bytes(1,"little")
+
+    index = 0
+    index = index.to_bytes(2,"little")
+
+    return (type_message_1 + id_server + len_payload + index+  eop)
+
+def TypeFourMessage():
+
+
+    eop =  "zzzz"
+    eop = eop.encode()
+
+
+
+    type_message_1 = 4
+    type_message_1 = type_message_1.to_bytes(1, "little")
+
+
+
+    id_server = 2
+    id_server = id_server.to_bytes(1,"little")
+
+    len_playload = 0
+    len_playload = len_playload.to_bytes(1,"little")
+
+    index = 0
+    index = index.to_bytes(3,"little")
+    print((type_message_1 + id_server + len_playload + index + eop))
+    return (type_message_1 + id_server + len_playload + index + eop)
+
 t1 =1
 TIPO2 = t1.to_bytes(1, 'little')
 
@@ -106,19 +150,27 @@ def main():
     print("-------------------------")
 
     ocioso = True  
-    
+    com.fisica.flush()
     while ocioso:
         rxBuffer, nRx = com.getData(5)
+        print("Depois do get Data")
         id = int.from_bytes(rxBuffer[1:2], byteorder='little')
         tipo = int.from_bytes(rxBuffer[0:1], byteorder='little')
         tamanho = int.from_bytes(rxBuffer[2:3], byteorder='little')
-        if   tipo ==t1:
+        print("Tipo da mensagem recebida: ", tipo)
+        if   tipo == t1:
             if id == PC_ID:
                 time.sleep(1)
                 rxBuffer, nRx = com.getData(tamanho)
+                rxBuffer = bytearray(rxBuffer)
+                rxBuffer2 = removeEOP(rxBuffer)
                 total = int.from_bytes(rxBuffer, byteorder='little')
-                com.sendData(TIPO2)
+                print("Enviando Mensagem TIPO2")
+                type2 = TypeOneMessage()
+                print(type2)
+                com.sendData(type2)
                 ocioso = False
+                print("Saindo do ocioso")
                 
         else: time.sleep(1)
             
@@ -129,20 +181,30 @@ def main():
     lista = list()
           
     
-    while index <=total and ocioso==False:
+    while index <total and ocioso==False:
         timer = time.time()
         reset = True
 
-        
+        print("Receberá o head e espera T3 message")   
+        com.fisica.flush() 
         rxBuffer, nRx = com.getData(5)
-        tipo = int.from_bytes(rxBuffer[0], byteorder='little')
+        print("Leu a mensagem")
+        print(rxBuffer)
+        tipo = int.from_bytes(rxBuffer[0:1], byteorder='little')
         while reset:
             reset = False
             if tipo == t3:
-                tamanho = int.from_bytes(rxBuffer[2], byteorder='little')
-                i_pacote = int.from_bytes(rxBuffer[3:], byteorder='little')    
+                print("Mensagem é tipo 3")
+                tamanho = int.from_bytes(rxBuffer[2:3], byteorder='little')
+                print("Tamanho", tamanho)
+                print(rxBuffer[3:5])
+                i_pacote = int.from_bytes(rxBuffer[3:5], byteorder='little') 
+                print("I pacote:", i_pacote, "I esperado:", index)   
                 if index == i_pacote:
-                    com.sendData(TIPO4)
+                    print("index e i_pacote batem")
+                    type4 = TypeFourMessage()
+                    print(type4)
+                    com.sendData(type4)
                     index +=1
                     rxBuffer2, nRx = com.getData(tamanho)
                     #Converte o rxBuffer para bytearray para podermos alterá-lo
@@ -160,6 +222,7 @@ def main():
                     index_esperado = index.to_bytes(2, byteorder='little')
                     com.sendData(TIPO6+place+index_esperado)
             else:
+                print("Mensagem não é tipo3")
                 time.sleep(1)
                 timer2 = time.time() - timer
                 if timer2 >20:
@@ -172,6 +235,7 @@ def main():
                         com.sendData(TIPO4)
                         timer = time.time()
                         reset = True
+            time.sleep(1)
                 
         
                 
