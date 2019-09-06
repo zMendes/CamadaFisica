@@ -14,70 +14,88 @@ print("comecou")
 from enlace import *
 import time
 
+t1 = 1
+t2 = 2
+t3 = 3
+t4 = 4
+t5 =5 
+t6 = 6
+PC_ID =2
 
-def TypeOneMessage():
+def typeTwo():
+    type_message = 2
+    type_message = type_message.to_bytes(1, "little")
+    
+    id_server = 1
+    id_server = id_server.to_bytes(1,"little")
+    
+    len_playload = 0
+    len_playload = len_playload.to_bytes(1,"little")
+    
+    index = 0
+    index = index.to_bytes(3,"little")
     
     eop =  "zzzz"
     eop = eop.encode()
+    
+    return (type_message + id_server + len_playload + index + eop)
 
-
-    len_payload = 0
-    len_payload = len_payload.to_bytes(1, "little")
-
-    type_message_1 = 2
-    type_message_1 = type_message_1.to_bytes(1, "little")
-
-    id_server = 2
+def typeFour():
+    type_message = 4
+    type_message = type_message.to_bytes(1, "little")
+    
+    id_server = 1
     id_server = id_server.to_bytes(1,"little")
-
-    index = 0
-    index = index.to_bytes(2,"little")
-
-    return (type_message_1 + id_server + len_payload + index+  eop)
-
-def TypeFourMessage():
-
-
-    eop =  "zzzz"
-    eop = eop.encode()
-
-
-
-    type_message_1 = 4
-    type_message_1 = type_message_1.to_bytes(1, "little")
-
-
-
-    id_server = 2
-    id_server = id_server.to_bytes(1,"little")
-
+    
     len_playload = 0
     len_playload = len_playload.to_bytes(1,"little")
-
+    
     index = 0
     index = index.to_bytes(3,"little")
-    print((type_message_1 + id_server + len_playload + index + eop))
-    return (type_message_1 + id_server + len_playload + index + eop)
+    
+    eop =  "zzzz"
+    eop = eop.encode()
+    
+    return (type_message + id_server + len_playload + index + eop)
 
-t1 =1
-TIPO2 = t1.to_bytes(1, 'little')
+def typeFive():
+    type_message = 5
+    type_message = type_message.to_bytes(1, "little")
+    
+    id_server = 1
+    id_server = id_server.to_bytes(1,"little")
+    
+    len_playload = 0
+    len_playload = len_playload.to_bytes(1,"little")
+    
+    index = 0
+    index = index.to_bytes(3,"little")
+    
+    eop =  "zzzz"
+    eop = eop.encode()
+    
+    return (type_message + id_server + len_playload + index + eop)
 
-t2 =2
-TIPO2 = t2.to_bytes(1, 'little')
+def typeSix():
+    type_message = 6
+    type_message = type_message.to_bytes(1, "little")
+    
+    id_server = 1
+    id_server = id_server.to_bytes(1,"little")
+    
+    len_playload = 0
+    len_playload = len_playload.to_bytes(1,"little")
+    
+    index = 0
+    index = index.to_bytes(3,"little")
+    
+    eop =  "zzzz"
+    eop = eop.encode()
+    
+    return (type_message + id_server + len_playload + index + eop)
 
-t3 =3
-TIPO3 = t3.to_bytes(1, 'little')
 
-t4 =4
-TIPO4 = t4.to_bytes(1, 'little')
 
-t5 =5
-TIPO5 = t5.to_bytes(1, 'little')
-
-t6 =6
-TIPO6 = t6.to_bytes(1, 'little')
-
-PC_ID = 2
 
 
 
@@ -87,10 +105,7 @@ PC_ID = 2
 def removeEOP(rxBuffer2):
     print(rxBuffer2)
     for i in range (len(rxBuffer2)):
-        
-    
             if i >3 :
-
                 if (rxBuffer2[i] == 122 and rxBuffer2[i-1] == 122 and rxBuffer2[i-2]==122  and rxBuffer2[i-3] == 122):
                     if i ==len(rxBuffer2)-1:
                         del rxBuffer2[i]
@@ -132,7 +147,6 @@ def toByte(rxBuffer2, lista):
 serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
 #serialName = "/dev/tty.usbmodem1411" # Mac    (variacao de)
 #serialName = "/dev/cu.usbmodem142101"
-#serialName = "COM4"                  # Windows(variacao de)
 print("abriu com")
 
 def main():
@@ -159,15 +173,14 @@ def main():
         tamanho = int.from_bytes(rxBuffer[2:3], byteorder='little')
         print("Tipo da mensagem recebida: ", tipo)
         if   tipo == t1:
-            if id == PC_ID:
+            if id == 2:
                 time.sleep(1)
                 rxBuffer, nRx = com.getData(tamanho)
                 rxBuffer = bytearray(rxBuffer)
                 rxBuffer2 = removeEOP(rxBuffer)
                 total = int.from_bytes(rxBuffer, byteorder='little')
                 print("Enviando Mensagem TIPO2")
-                type2 = TypeOneMessage()
-                print(type2)
+                type2 = typeTwo()
                 com.sendData(type2)
                 ocioso = False
                 print("Saindo do ocioso")
@@ -180,31 +193,25 @@ def main():
     
     lista = list()
           
+        
     
     while index <total and ocioso==False:
-        timer = time.time()
-        reset = True
-
-        print("Receberá o head e espera T3 message")   
-        com.fisica.flush() 
-        rxBuffer, nRx = com.getData(5)
-        print("Leu a mensagem")
-        print(rxBuffer)
-        tipo = int.from_bytes(rxBuffer[0:1], byteorder='little')
+        timer1 = time.time()
+        timer2 = time.time()
+        reset = True    
         while reset:
             reset = False
+            
+            rxBuffer, nRx = com.getData(5)
+            tipo = int.from_bytes(rxBuffer[0:1], byteorder='little')
+                    
             if tipo == t3:
-                print("Mensagem é tipo 3")
+                print("Mensagem T3 recebida")
                 tamanho = int.from_bytes(rxBuffer[2:3], byteorder='little')
-                print("Tamanho", tamanho)
-                print(rxBuffer[3:5])
                 i_pacote = int.from_bytes(rxBuffer[3:5], byteorder='little') 
-                print("I pacote:", i_pacote, "I esperado:", index)   
                 if index == i_pacote:
-                    print("index e i_pacote batem")
-                    type4 = TypeFourMessage()
-                    print(type4)
-                    com.sendData(type4)
+                    print("Pacote de número {0} veio corretamente.".format(index))
+                    com.sendData(typeFour())
                     index +=1
                     rxBuffer2, nRx = com.getData(tamanho)
                     #Converte o rxBuffer para bytearray para podermos alterá-lo
@@ -217,25 +224,25 @@ def main():
                     rxBuffer = toByte(rxBuffer_stuff, lista)
 
                 else:
-                    placeholder = 0
-                    place = placeholder.to_bytes(2, byteorder='little')
-                    index_esperado = index.to_bytes(2, byteorder='little')
-                    com.sendData(TIPO6+place+index_esperado)
+                    print("Index recebido e esperado não batem")
+                    print("Enviando mensagem T5")
+                    com.sendData(typeSix())
             else:
-                print("Mensagem não é tipo3")
+                print("Mensagem recebida não é T3")
                 time.sleep(1)
-                timer2 = time.time() - timer
+                timer2 = time.time() - timer2
                 if timer2 >20:
-                    com.sendData(TIPO5)
+                    com.sendData(typeFive())
                     ocioso = True
                     print(":(")
                 else:
-                    timer1 = time.time() - timer
+                    timer1 = time.time() - timer1
+                    reset = True
                     if timer1 > 2:
-                        com.sendData(TIPO4)
+                        com.sendData(typeFour())
                         timer = time.time()
-                        reset = True
-            time.sleep(1)
+                        
+            time.sleep(0.2)
                 
         
                 
