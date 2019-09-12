@@ -155,14 +155,14 @@ def main():
     # Ativa comunicacao
     com.enable()
 
-    
+    file = open("log.txt", "w")
 
     # Log
     print("-------------------------")
     print("Comunicação inicializada")
     print("  porta : {}".format(com.fisica.name))
     print("-------------------------")
-
+    
     ocioso = True  
     com.fisica.flush()
     while ocioso:
@@ -174,6 +174,7 @@ def main():
         print("Tipo da mensagem recebida: ", tipo)
         if   tipo == t1:
             if id == 2:
+                file.write("Mensagem: Tipo 1 - recebida: " + str(round(time.time())) + " - destinatário: 2")
                 time.sleep(1)
                 rxBuffer, nRx = com.getData(tamanho)
                 rxBuffer = bytearray(rxBuffer)
@@ -182,6 +183,7 @@ def main():
                 print("Enviando Mensagem TIPO2")
                 type2 = typeTwo()
                 com.sendData(type2)
+                file.write("Mensagem: Tipo 2 - enviada: " + str(round(time.time())) + " - destinatário: 1 \n")
                 ocioso = False
                 print("Saindo do ocioso")
                 
@@ -206,12 +208,14 @@ def main():
             tipo = int.from_bytes(rxBuffer[0:1], byteorder='little')
                     
             if tipo == t3:
+                file.write("Mensagem: Tipo 3 - recebida: " + time.time() + " - destinatário: 2 \n")
                 print("Mensagem T3 recebida")
                 tamanho = int.from_bytes(rxBuffer[2:3], byteorder='little')
                 i_pacote = int.from_bytes(rxBuffer[3:5], byteorder='little') 
                 if index == i_pacote:
                     print("Pacote de número {0} veio corretamente.".format(index))
                     com.sendData(typeFour())
+                    file.write("Mensagem: Tipo 4 - enviada: " + str(round(time.time())) +  " - destinatário: 1 \n")
                     index +=1
                     rxBuffer2, nRx = com.getData(tamanho)
                     #Converte o rxBuffer para bytearray para podermos alterá-lo
@@ -225,7 +229,8 @@ def main():
 
                 else:
                     print("Index recebido e esperado não batem")
-                    print("Enviando mensagem T5")
+                    print("Enviando mensagem T6")
+                    file.write("Mensagem: Tipo 6 - enviada: " + str(round(time.time())) + " - destinatário: 1 \n")
                     com.sendData(typeSix())
             else:
                 print("Mensagem recebida não é T3")
@@ -233,6 +238,7 @@ def main():
                 timer2 = time.time() - timer2
                 if timer2 >20:
                     com.sendData(typeFive())
+                    file.write("Mensagem: Tipo 5 - enviada: " + str(round(time.time())) + " - destinatário: 1 \n")
                     ocioso = True
                     print(":(")
                 else:
@@ -240,6 +246,7 @@ def main():
                     reset = True
                     if timer1 > 2:
                         com.sendData(typeFour())
+                        file.write("Mensagem: Tipo 4 - enviada: " + str(round(time.time())) + " - destinatário: 1 \n")
                         timer = time.time()
                         
             time.sleep(0.2)
@@ -251,7 +258,7 @@ def main():
 
 
 
-    
+    file.close()
     #print(rxBuffer2)
 
     print ("Lido              {} bytes ".format(nRx))
