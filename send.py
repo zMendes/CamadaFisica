@@ -19,8 +19,8 @@ import time
 # im = input("Digite o nome da imagem a ser transmitida: ")
 
 
-# serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
-serialName = "/dev/tty.usbmodem14101" # Mac    (variacao de)
+serialName = "/dev/ttyACM0"           # Ubuntu (variacao de)
+# serialName = "/dev/tty.usbmodem14101" # Mac    (variacao de)
 # serialName = "COM11"                  # Windows(variacao de)
 print("abriu com")
 
@@ -60,7 +60,7 @@ def createTypeThreeMessage(payload, index):
     eop = eop.encode()
 
     size_package = 132
-    size_package = size_package.to_bytes(2, "little")
+    size_package = size_package.to_bytes(1, "little")
 
     index = index.to_bytes(2, "little")
 
@@ -85,9 +85,6 @@ def createTypeFiveMessage():
 
     return (type_message_5 + id_server + size_payload + index + eop)
 
-
-
-
 def main():
     # Inicializa enlace ... variavel com possui todos os metodos e propriedades do enlace, que funciona em threading
     com = enlace(serialName) # repare que o metodo construtor recebe um string (nome)
@@ -101,7 +98,7 @@ def main():
     
     com.fisica.flush()
    
-    with open("logo.png", "rb") as image:
+    with open("small.png", "rb") as image:
         f = image.read()
         txBuffer = bytearray(f)
     
@@ -113,54 +110,49 @@ def main():
     while inicia == False:
 
         type_1_message = createTypeOneMessage(txBuffer)
-        com.sendData(type_1_message)
-        time.sleep(5)
-        rxBuffer, nRx = com.getData(5)
-        tipo = int.from_bytes(rxBuffer[0], byteorder='little')
-        if tipo == 2:
+        send_message_1 = com.sendData(type_1_message)
+        time.sleep(2)
+        rxBuffer, nRx = com.getData(9)
+        print(rxBuffer, "TIPO 2")
+        if rxBuffer[0] == 2:
             inicia = True
-
+        
     number_of_packages = len(txBuffer) // 128 + 1
-
-    # eop = "zzzz"
-    # e = eop.encode()
-
-    # t = 132
-    # tpkg = t.to_bytes(2, "little")
-
-    # com.fisica.flush()
 
     dic = {}
     index = 1
 
     lista = bytearray()
 
-    com.fisica.flush()
-
     for i in txBuffer:
         lista.append(i)
 
         if len(lista) >= 128:
-            dic[index] = lista
+            dic[index] = lista.copy()
             index = index + 1
             lista.clear()
-
+    
+    dic[index] = lista.copy()
+    lista.clear()
+    
     cont = 1
 
-    while cont <= number_of_packages:
+    while cont < number_of_packages:
         reset = True
-        com.fisica.flush()
         type_3_message = createTypeThreeMessage(dic[cont], cont)
         com.sendData(type_3_message)
         timer = time.time()
-    
-        time.sleep(1)
 
+        time.sleep(1)
+    
         while reset:
-            reset= False
-            rxBuffer, nRx = com.getData(5)
-            tipo = int.from_bytes(rxBuffer[0], byteorder='little')
-            if tipo == 4:
+
+            reset = False
+            com.fisica.flush()
+            rxBuffer, nRx = com.getData(10)
+            tipo = rxBuffer[0]
+            print(tipo)
+            if rxBuffer[0] == 4:
                 cont = cont + 1
             else:
                 timer1 = time.time() - timer
@@ -178,17 +170,9 @@ def main():
                             index_esperado = int.from_bytes(rxBuffer[3:], byteorder='little')
                             cont = index_esperado
                             com.sendData(dic[cont])
-                            timer = time.time()]
+                            timer = time.time()
                             reset = True
 
-
-    com.fisica.flush()
-    headpkg = 1 + headpkg
-    hpbyte = headpkg.to_bytes(2, "little")
-    tpkg = len(listay).to_bytes(2, "little")
-    stuff = head + hpbyte + tpkg + listay + e
-    com.sendData(stuff)
-    listay.clear()
 
     # Encerra comunicação
     print("-------------------------")
