@@ -164,7 +164,7 @@ def main():
 
             reset = False
             com.fisica.flush()
-            rxBuffer, nRx = com.getDataTimer(10, timer1, timer2)
+            rxBuffer, nRx = com.getDataTimerClient(10, timer1, timer2)
             if rxBuffer[0] == 4:
                 log.write("MENSAGEM TIPO 4 - RECEBIDA " + str(time.time()) + "- DESTINATÁRIO 1\n")
                 cont = cont + 1

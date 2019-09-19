@@ -125,3 +125,16 @@ class RX(object):
             time.sleep(0.001)
 #                 
         return(self.getBuffer(size))
+
+    def getNDataTimerServer(self, size, timer1, timer2):
+        """ Read N bytes of data from the reception buffer
+        This function blocks until the number of bytes is received
+        """
+        while(self.getBufferLen() < size):
+            if time.time() - timer2>20:
+                return [222,222,222,222]
+            elif time.time() - timer1>2:
+                return [111,111,111,111]
+            
+            time.sleep(0.001)
+        return(self.getBuffer(size))

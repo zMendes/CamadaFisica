@@ -210,7 +210,7 @@ def main():
         while reset:
             reset = False
             
-            rxBuffer, nRx = com.getDataTimer(5, timer1, timer2)
+            rxBuffer, nRx = com.getDataTimerServer(5, timer1, timer2)
             tipo = int.from_bytes(rxBuffer[0:1], byteorder='little')
                     
             if tipo == t3:
