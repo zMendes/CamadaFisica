@@ -102,6 +102,10 @@ def main():
         f = image.read()
         txBuffer = bytearray(f)
     
+    txBufferLen = len(txBuffer)
+
+    log = open("log.txt", "w")
+    
     for i in range(len(txBuffer)):
         if i > 3:
             if (txBuffer[i] == 122 and txBuffer[i-1] == 122 and txBuffer[i-2] == 122 and txBuffer[i-3] == 122):
@@ -111,10 +115,16 @@ def main():
 
         type_1_message = createTypeOneMessage(txBuffer)
         send_message_1 = com.sendData(type_1_message)
+
+        timertimer = time.time()
+
+        log.write("MENSAGEM TIPO 1 - ENVIADA " + str(time.time()) + "- DESTINATÁRIO 2\n")
+
         time.sleep(2)
-        rxBuffer, nRx = com.getData(9)
-        print(rxBuffer, "TIPO 2")
+        rxBuffer, nRx = com.getData(10)
+        
         if rxBuffer[0] == 2:
+            log.write("MENSAGEM TIPO 2 - RECEBIDA " + str(time.time()) + "- DESTINATÁRIO 1\n")
             inicia = True
         
     number_of_packages = len(txBuffer) // 128 + 1
@@ -136,12 +146,17 @@ def main():
     lista.clear()
     
     cont = 1
+    stop = False
 
     while cont < number_of_packages:
         reset = True
+
         type_3_message = createTypeThreeMessage(dic[cont], cont)
         com.sendData(type_3_message)
-        timer = time.time()
+        log.write("MENSAGEM TIPO 3 - ENVIADA " + str(time.time()) + "- DESTINATÁRIO 2\n")
+
+        timer1 = time.time()
+        timer2 = time.time()
 
         time.sleep(1)
     
@@ -149,31 +164,43 @@ def main():
 
             reset = False
             com.fisica.flush()
-            rxBuffer, nRx = com.getData(10)
-            tipo = rxBuffer[0]
-            print(tipo)
+            rxBuffer, nRx = com.getDataTimer(10, timer1, timer2)
             if rxBuffer[0] == 4:
+                log.write("MENSAGEM TIPO 4 - RECEBIDA " + str(time.time()) + "- DESTINATÁRIO 1\n")
                 cont = cont + 1
             else:
-                timer1 = time.time() - timer
-                if timer1 > 5:
-                    com.sendData(type_3_message)
+                if rxBuffer[0] == 222 or rxBuffer[0] == 333:
+                    type_5_message = createTypeFiveMessage()
+                    com.sendData(type_5_message)
+                    log.write("MENSAGEM TIPO 5 - ENVIADA " + str(time.time()) + "- DESTINATÁRIO 2\n")
+                    print(":-(")
+                    stop = True
+                    break
                 else:
-                    timer2 = time.time() - timer
-                    if timer2 > 20:
-                        type_5_message = createTypeFiveMessage()
-                        com.sendData(type_5_message)
-                        print(":-(")
-                        break
-                    else:
-                        if tipo == 6:
-                            index_esperado = int.from_bytes(rxBuffer[3:], byteorder='little')
-                            cont = index_esperado
-                            com.sendData(dic[cont])
-                            timer = time.time()
-                            reset = True
+                    if rxBuffer[0] == 6:
+                        index_esperado = int.from_bytes(rxBuffer[3:6], byteorder='little')
+                        log.write("MENSAGEM TIPO 6 - RECEBIDA " + str(time.time()) + "- DESTINATÁRIO 1\n")
+                        cont = index_esperado
+                        log.write("MENSAGEM TIPO 3 - ENVIADA " + str(time.time()) + "- DESTINATÁRIO 2\n")
+                        type_3_message = createTypeThreeMessage(dic[cont], cont)
+                        com.sendData(type_3_message)
+                        timer = time.time()
+                        reset = True
 
+                    elif rxBuffer[0] == 111:
+                        com.sendData(type_3_message)
+                        log.write("MENSAGEM TIPO 3 - ENVIADA " + str(time.time()) + "- DESTINATÁRIO 2\n")
+                        timer1 = time.time()
+                        reset = True
 
+        if stop:
+            break
+    
+    timetime = time.time() - timertimer
+    log.write("Throughput: " + str(txBufferLen/timetime))
+
+    
+    log.close()
     # Encerra comunicação
     print("-------------------------")
     print("Comunicação encerrada")
