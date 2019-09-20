@@ -11,6 +11,8 @@ print("comecou")
 
 from enlace import *
 import time
+import crcmod
+from PyCRC.CRCCCITT import CRCCCITT
 
 # Serial Com Port
 #   para saber a sua porta, execute no terminal :
@@ -46,9 +48,12 @@ def createTypeOneMessage(payloadLen):
     index = 0
     index = index.to_bytes(2,"little")
 
-    return (type_message_1 + id_server + len_payload + index + payload_eop)
+    shit = 0000
+    shitbytes = shit.to_bytes(4, "little")
 
-def createTypeThreeMessage(payload, index):
+    return (type_message_1 + id_server + len_payload + index + shitbytes + payload_eop)
+
+def createTypeThreeMessage(payload, index, crc):
     
     type_message_3 = 3
     type_message_3 = type_message_3.to_bytes(1, "little")
@@ -64,7 +69,9 @@ def createTypeThreeMessage(payload, index):
 
     index = index.to_bytes(2, "little")
 
-    return (type_message_3 + id_server + size_package + index + payload + eop)
+    crcbytes = crc.to_bytes(4, "little")
+
+    return (type_message_3 + id_server + size_package + index + crcbytes + payload + eop)
 
 def createTypeFiveMessage():
 
@@ -83,7 +90,10 @@ def createTypeFiveMessage():
     index = 0
     index = index.to_bytes(2,"little")
 
-    return (type_message_5 + id_server + size_payload + index + eop)
+    shit = 0000
+    shitbytes = shit.to_bytes(4, "little")
+
+    return (type_message_5 + id_server + size_payload + index + shitbytes + eop)
 
 def main():
     # Inicializa enlace ... variavel com possui todos os metodos e propriedades do enlace, que funciona em threading
@@ -97,10 +107,22 @@ def main():
     time.sleep(2)
     
     com.fisica.flush()
-   
+
     with open("small.png", "rb") as image:
         f = image.read()
         txBuffer = bytearray(f)
+
+    def crc_16_CCITT(msg):
+        poly = 0x8408
+        crc = 0xffff
+        for byte in msg:
+            for _ in range(8):
+                if (byte ^ crc) & 1:
+                    crc = (crc >> 1) ^ poly
+                else:
+                    crc >>= 1
+                byte >>= 1
+        return crc ^ 0xffff
     
     txBufferLen = len(txBuffer)
 
@@ -121,7 +143,7 @@ def main():
         log.write("MENSAGEM TIPO 1 - ENVIADA " + str(time.time()) + "- DESTINATÁRIO 2\n")
 
         time.sleep(2)
-        rxBuffer, nRx = com.getData(10)
+        rxBuffer, nRx = com.getData(14)
         
         if rxBuffer[0] == 2:
             log.write("MENSAGEM TIPO 2 - RECEBIDA " + str(time.time()) + "- DESTINATÁRIO 1\n")
@@ -151,7 +173,14 @@ def main():
     while cont < number_of_packages:
         reset = True
 
-        type_3_message = createTypeThreeMessage(dic[cont], cont)
+        crc32 = crc_16_CCITT(dic[cont])
+
+        print(cont)
+
+        print(dic[cont])
+
+        type_3_message = createTypeThreeMessage(dic[cont], cont, crc32)
+
         com.sendData(type_3_message)
         log.write("MENSAGEM TIPO 3 - ENVIADA " + str(time.time()) + "- DESTINATÁRIO 2\n")
 
@@ -164,7 +193,9 @@ def main():
 
             reset = False
             com.fisica.flush()
-            rxBuffer, nRx = com.getDataTimerClient(10, timer1, timer2)
+            
+            rxBuffer, nRx = com.getDataTimerClient(14, timer1, timer2)
+
             if rxBuffer[0] == 4:
                 log.write("MENSAGEM TIPO 4 - RECEBIDA " + str(time.time()) + "- DESTINATÁRIO 1\n")
                 cont = cont + 1
